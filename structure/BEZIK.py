@@ -54,3 +54,5 @@ class BEZIK:
             print(translated_sentence)
         
         self.executor.execute(translated_sentence[:-1])
+
+        return " ".join(translated_sentence[:-1])

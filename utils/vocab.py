@@ -23,11 +23,3 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 train_iterator, valid_iterator, test_iterator = BucketIterator.splits(
     (train_data, valid_data, test_data), batch_size=32, device=device
 )
-
-# for example in train_data.examples[:5]:
-#     print("Question:", example.src)
-#     print("Answer:", example.trg)
-#     print()
-
-# for data in polish_dict.vocab.stoi:
-#     print(data)

@@ -1,7 +1,7 @@
 from structure.BEZIK import BEZIK
 
 if __name__ == "__main__":
-    model = BEZIK(test_mode=False)
+    model = BEZIK(test_mode=True)
 
     print("------------------BEZIK-----------------------")
     print("----------AI COMPUTER ASSISTANT---------------")

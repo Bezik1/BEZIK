@@ -109,7 +109,6 @@ class Executor():
                 match mode:
                     case "search":
                         page_source = driver.page_source
-
                         search_text_param = command_list[3][1:-1]
 
                         try:
