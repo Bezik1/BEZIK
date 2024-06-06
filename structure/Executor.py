@@ -42,6 +42,11 @@ WEBDRIVER_SCRIPTS = {
     "scroll": "arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });",
 }
 
+START_PROGRAMS = {
+    "python": "python",
+    "txt": "notepad",
+}
+
 EXCEL_DICT = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N']
 
 class Executor():
@@ -123,7 +128,10 @@ class Executor():
                 
                 time.sleep(7.5)
                 driver.quit()
-                
+
+            case 'close':
+                subprocess.run(["taskkill", "/F", "/IM", f'{command_list[1]}.exe'])
+
             case 'open':
                 pyautogui.press('winleft')
                 pyautogui.write(command_list[1])
@@ -160,19 +168,23 @@ class Executor():
             
             case 'write':
                 extension = PROGRAM_EXTENSIONS[command_list[1]]
-                program = f'''{" ".join(command_list[2:])[1:-1].replace("true", "True").replace("false", "False")}'''[1:]
+                program = f'''{" ".join(command_list[2:])[1:-1].replace("true", "True").replace("false", "False")}'''[0:]
 
                 # Path
-                #desktop_path = path.join(path.join(environ['USERPROFILE']), 'OneDrive\Pulpit')
-                #file_path = path.join(desktop_path, f'file.{extension}')
+                desktop_path = path.join(path.join(environ['USERPROFILE']), 'OneDrive\Pulpit')
+                desktop_file_path = path.join(desktop_path, f'file.{extension}')
                 file_path = f'file.{extension}'
 
                 writer_file = open(file_path, "w")
                 writer_file.write(program)
                 writer_file.close()
 
+                desktop_writer_file = open(desktop_file_path, "w")
+                desktop_writer_file.write(program)
+                desktop_writer_file.close()
+
                 file = open(file_path, "a")
-                subprocess.call(["python", file_path],creationflags=subprocess.CREATE_NEW_CONSOLE)
+                subprocess.call([START_PROGRAMS[command_list[1]], file_path],creationflags=subprocess.CREATE_NEW_CONSOLE)
                 
             case _:
                 print("Nieprawidłowa komenda")

@@ -42,6 +42,7 @@ class BEZIK:
 
         optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         load_checkpoint(torch.load("network.pth.tar"), self.model, optimizer)
+        #load_checkpoint(torch.load("C:/Users/mateu/Desktop/Operator/network.pth.tar"), self.model, optimizer)
         
         self.executor = Executor()
     

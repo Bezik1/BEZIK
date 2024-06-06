@@ -20,28 +20,39 @@ speech_recognizer = SpeechRecognizer()
 
 @app.get("/command/{req}")
 def execute_command(req: str):
-    operation = model(req.replace('%', ' '))
+    try:
+        operation = model(req.replace('%', ' '))
 
-    return { "status": 200, "operation": operation, }
+        return { "status": 200, "operation": operation, "message": "Operation executed succesfully" }
+    except:
+        return { "status": 500, "message": "Operation executing error" }
 
 @app.get("/upload")
 async def upload_file():
-    duration = 7
-    fs=16000
+    try:
+        duration = 5
+        fs=16000
 
-    print("Start speaking...")
-    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
-    sd.wait()
-    print("Recording finished.")
-    wav.write("recording.wav", fs, recording)
+        print("Start speaking...")
+        recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        print("Recording finished.")
+        wav.write("recording.wav", fs, recording)
+
+        return { "status": 200, "message": "File uploaded succesfully" }
+    except:
+        return { "status": 500, "message": "Uploading file error" }
 
 
 @app.get("/read")
 def read_item():
-    transcription = speech_recognizer.transcribe_audio("recording.wav")
-    operation = model(transcription.replace('%', ' '))
+    try:
+        transcription = speech_recognizer.transcribe_audio("recording.wav")
+        operation = model(transcription.replace('%', ' '))
 
-    return { "status": 200, "operation": operation, "transcription": transcription }
+        return { "status": 200, "operation": operation, "transcription": transcription, "message": "Operation executed succesfully" }
+    except:
+        return { "status": 500, "message": "Transcription / Operation executing error" }
 
 if __name__ == "__main__":
     import uvicorn
