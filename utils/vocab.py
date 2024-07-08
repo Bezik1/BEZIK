@@ -1,5 +1,5 @@
 import spacy
-from torchtext.data import Field, TabularDataset, BucketIterator, Iterator
+from torchtext.data import Field, TabularDataset, BucketIterator
 import torch
 
 spacy_pl = spacy.load("pl_core_news_md")

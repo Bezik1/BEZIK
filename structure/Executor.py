@@ -6,7 +6,13 @@ import sys
 from os import path, environ, startfile
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+import requests
+from bs4 import BeautifulSoup
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.edge.options import Options as EdgeOptions
+
+from utils.excel_formats import map_format
 
 #---------------------------Instructions---------------------------
 #   write [program_type]: [program code]
@@ -33,11 +39,8 @@ PROGRAM_EXTENSIONS = {
 
 WEBDRIVER_SCRIPTS = {
     "highlight": """
-    const range = document.createRange();
-    const selection = window.getSelection();
-    range.selectNodeContents(arguments[0]);
-    selection.removeAllRanges();
-    selection.addRange(range);
+    arguments[0].style.border='3px solid lightblue';
+    arguments[0].style.backgroundColor='lightblue';
     """,
     "scroll": "arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });",
 }
@@ -51,7 +54,7 @@ EXCEL_DICT = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', '
 
 class Executor():
     def __init__(self) -> None:
-        pass
+        self.cache = {}
 
     def text_analize(self, text):
         pass
@@ -105,16 +108,22 @@ class Executor():
                 command_list = self.join_quotes(command_list)
 
                 mode = command_list[1]
-                url = command_list[2]
 
-                driver = webdriver.Edge()
-                driver.maximize_window()
-                driver.get(url)
+                edge_options = EdgeOptions()
+                edge_options.use_chromium = True
+                edge_options.add_argument("--start-maximized")
+                edge_options.add_argument("--disable-popup-blocking")
+                edge_options.add_argument("--disable-notifications")
 
+                driver = webdriver.Edge(options=edge_options)
+                
                 match mode:
                     case "search":
                         page_source = driver.page_source
                         search_text_param = command_list[3][1:-1]
+
+                        url = command_list[2]
+                        driver.get(url)
 
                         try:
                             element = driver.find_element(By.XPATH, f"//*[contains(text(), '{search_text_param}')]")
@@ -123,20 +132,62 @@ class Executor():
                             driver.execute_script(WEBDRIVER_SCRIPTS["scroll"], element)
                         except:
                             print("Nie odnaleziono tekstu")
+                    case "find":
+                        search_text_param = " ".join(command_list[2:])
+
+                        url = f'https://www.google.com/search?q={search_text_param}'
+                        driver.get(url)
+
+                        try:
+                            accept_all_button_xpath = "//button[@id='L2AGLb']"
+                            accept_all_button = WebDriverWait(driver, 10).until(
+                                EC.element_to_be_clickable((By.XPATH, accept_all_button_xpath))
+                            )
+                            accept_all_button.click()
+                            elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{search_text_param}')]")
+
+                            links = []
+                            informations = []
+                            if elements:
+                                for element in elements:
+                                    if element.tag_name.lower() == 'a':
+                                        link = element.get_attribute('href')
+                                        if link:
+                                            links.append(link)
+                                        
+                                            try:
+                                                response = requests.get(url)
+                                                soup = BeautifulSoup(response.text, 'html.parser')
+
+                                                divs = soup.find_all('div')
+                                                informations = [div.get_text() for div in divs if search_text_param in div.get_text()]
+                                            except:
+                                                pass
+
+                                    driver.execute_script(WEBDRIVER_SCRIPTS["highlight"], element)
+                            self.cache["links"] = links
+                            self.cache["informations"] = informations
+                        except:
+                            print("Nie odnaleziono tekstu")
+                        
                     case _:
                         print("Nieprawidłowy tryb")
                 
-                time.sleep(7.5)
+                time.sleep(12)
                 driver.quit()
 
             case 'close':
-                subprocess.run(["taskkill", "/F", "/IM", f'{command_list[1]}.exe'])
+                subprocess.run(["taskkill", "/F", "/IM", f'{" ".join(command_list[1:])[1:]}.exe'])
 
             case 'open':
+                command_str = " ".join(command_list[1:])
+
                 pyautogui.press('winleft')
-                pyautogui.write(command_list[1])
+
+                pyautogui.write(command_str)
                 pyautogui.press('enter')
-                time.sleep(2)
+
+                return command_str
             case 'excel':
                 # Excel Operations
                 #
@@ -149,22 +200,42 @@ class Executor():
                 wb = openpyxl.Workbook()
                 sheet = wb.active
 
-                column_names = command_list[1].split(',')
-                column_values = []
-                
-                for i in range(2, len(command_list)):
-                    column_values.append(command_list[i].split(','))
-                
-                for i, name in enumerate(column_names):
-                    sheet[f'{EXCEL_DICT[i]}1'] = name
+                operation = command_list[1]
 
-                for i in range(len(column_names)):
-                    for j in range(len(column_values[0])):
-                        sheet[f'{EXCEL_DICT[i]}{j+2}'] = column_values[i][j]
+                match operation:
+                    case "columns":
+                        column_names = command_list[2].split(',')
+                        column_values = []
+                        
+                        for i in range(2, len(command_list)):
+                            column_values.append(command_list[i].split(','))
+                        
+                        for i, name in enumerate(column_names):
+                            sheet[f'{EXCEL_DICT[i]}1'] = name
 
-                file_path = 'example.xlsx'
-                wb.save(file_path)
-                startfile(file_path)
+                        for i in range(len(column_names)):
+                            for j in range(len(column_values[0])):
+                                sheet[f'{EXCEL_DICT[i]}{j+2}'] = column_values[i][j]
+
+                        file_path = 'example.xlsx'
+                        wb.save(file_path)
+                        startfile(file_path)
+                    case "load":
+                        desktop_path = path.join(path.join(environ['USERPROFILE']), 'Desktop')
+                        data_file_path = f'{desktop_path}/{command_list[2]}.txt'
+                        file = open(data_file_path, "r")
+
+                        for row_idx, line in enumerate(file.readlines(), start=1):
+                            cells = line.strip().split()
+                            for col_idx, cell_value in enumerate(cells, start=1):
+                                cell = wb.active.cell(row=row_idx, column=col_idx, value=cell_value)
+                                cell.number_format = map_format(cell_value)
+                        
+                        file_path = 'example.xlsx'
+                        wb.save(file_path)
+                        startfile(file_path)
+                    case _:
+                        print("Nieprawidłowa komenda excela")
             
             case 'write':
                 extension = PROGRAM_EXTENSIONS[command_list[1]]
@@ -188,3 +259,4 @@ class Executor():
                 
             case _:
                 print("Nieprawidłowa komenda")
+        return self.cache

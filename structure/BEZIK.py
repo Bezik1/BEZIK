@@ -52,8 +52,7 @@ class BEZIK:
         )
         
         if self.test_mode:
-            print(translated_sentence)
-        
-        self.executor.execute(translated_sentence[:-1])
+            print(translated_sentence[:-1])
+        cache = self.executor.execute(translated_sentence[:-1])
 
-        return " ".join(translated_sentence[:-1])
+        return " ".join(translated_sentence[:-1]), cache

@@ -21,9 +21,9 @@ speech_recognizer = SpeechRecognizer()
 @app.get("/command/{req}")
 def execute_command(req: str):
     try:
-        operation = model(req.replace('%', ' '))
+        operation, cache = model(req.replace('%', ' '))
 
-        return { "status": 200, "operation": operation, "message": "Operation executed succesfully" }
+        return { "status": 200, "operation": operation, "message": "Operation executed succesfully", "cache":  cache }
     except:
         return { "status": 500, "message": "Operation executing error" }
 
