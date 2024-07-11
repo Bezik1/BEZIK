@@ -15,7 +15,7 @@ if __name__ == "__main__":
     train_model = True
     test_model = False
 
-    epochs = 90
+    epochs = 60
     learning_rate = 10e-5
     batch_size = 64
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     if load_model:
         load_checkpoint(torch.load("network.pth.tar"), model, optimizer)
 
-    sentence = "Otwórz edytor tekstowy"
+    sentence = "Czym jest magic"
 
     step = 0
     if train_model:

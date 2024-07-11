@@ -134,6 +134,7 @@ class Executor():
                             print("Nie odnaleziono tekstu")
                     case "find":
                         search_text_param = " ".join(command_list[2:])
+                        search_text_param = search_text_param[0].capitalize() + search_text_param[1:]
 
                         url = f'https://www.google.com/search?q={search_text_param}'
                         driver.get(url)
@@ -147,37 +148,28 @@ class Executor():
                             elements = driver.find_elements(By.XPATH, f"//*[contains(text(), '{search_text_param}')]")
 
                             links = []
-                            informations = []
                             if elements:
                                 for element in elements:
                                     if element.tag_name.lower() == 'a':
                                         link = element.get_attribute('href')
                                         if link:
                                             links.append(link)
-                                        
-                                            try:
-                                                response = requests.get(url)
-                                                soup = BeautifulSoup(response.text, 'html.parser')
-
-                                                divs = soup.find_all('div')
-                                                informations = [div.get_text() for div in divs if search_text_param in div.get_text()]
-                                            except:
-                                                pass
 
                                     driver.execute_script(WEBDRIVER_SCRIPTS["highlight"], element)
+                            
+                            information_div = driver.find_element(By.CLASS_NAME, "kno-rdesc")
+
+                            self.cache["informations"] = information_div.text[5:]
                             self.cache["links"] = links
-                            self.cache["informations"] = informations
                         except:
                             print("Nie odnaleziono tekstu")
                         
                     case _:
                         print("Nieprawidłowy tryb")
-                
-                time.sleep(12)
                 driver.quit()
 
             case 'close':
-                subprocess.run(["taskkill", "/F", "/IM", f'{" ".join(command_list[1:])[1:]}.exe'])
+                subprocess.run(["taskkill", "/F", "/IM", f'{" ".join(command_list[1:])[0:]}.exe'])
 
             case 'open':
                 command_str = " ".join(command_list[1:])
