@@ -13,18 +13,18 @@ if __name__ == "__main__":
     load_model = False
     save_model = True
     train_model = True
-    test_model = False
+    test_model = True
 
-    epochs = 60
-    learning_rate = 10e-5
+    epochs = 50
+    learning_rate = 1e-4
     batch_size = 64
 
     src_vocab_size = len(polish_dict.vocab)
     trg_vocab_size = len(polish_dict.vocab)
     embedding_size = 516
     num_heads = 12
-    num_encoder_layers = 6
-    num_decoder_layers = 6
+    num_encoder_layers = 8
+    num_decoder_layers = 8
     dropout = 0.10
     max_len = 128
     forward_expansion = 4
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     if load_model:
         load_checkpoint(torch.load("network.pth.tar"), model, optimizer)
 
-    sentence = "Czym jest magic"
+    sentence = "dodaj kolumny gra i gracze do pliku gry o wartościach fnaf minecraft valorant oraz 100 150 120"
 
     step = 0
     if train_model:
@@ -118,8 +118,7 @@ if __name__ == "__main__":
             print(f"Question: {question} | Answer: {translated_sentence} | Right Answer {answer}")
 
         test_score = bleu(test_data[1:100], model, polish_dict, polish_dict, device)
-        valid_score = bleu(valid_data[1:100], model, polish_dict, polish_dict, device)
-        print(f"Bleu score: | Test Data: {test_score} | Validation Data: {valid_score} |")
+        print(f"Bleu score: | Test Data: {test_score}")
 
     # while True:
     #     sentence = input("Write sentence for translation: ")

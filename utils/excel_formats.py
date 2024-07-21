@@ -1,4 +1,5 @@
 from dateutil.parser import parse
+from openpyxl.styles import numbers
 
 def is_float(value):
     try:
@@ -29,7 +30,7 @@ def is_str(value):
         return False
 
 def map_format(value):
-    funcs = [(is_int, '0'), (is_date, 'yyyy-mm-dd'), (is_float, '0.00'), (is_str, '@')]
+    funcs = [(is_int, numbers.FORMAT_NUMBER), (is_date, numbers.FORMAT_DATE_YYYYMMDD2), (is_float, numbers.FORMAT_CURRENCY_USD), (is_str, numbers.FORMAT_TEXT)]
 
     for func, label in funcs:
         if func(value):

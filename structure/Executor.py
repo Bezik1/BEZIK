@@ -14,17 +14,6 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 
 from utils.excel_formats import map_format
 
-#---------------------------Instructions---------------------------
-#   write [program_type]: [program code]
-#   open [path] [new_window?]
-#   close [program]
-#   webdriver [mode] [path] [website_instrucitons?]:
-#       form_name [name] [value]
-#       submit
-#       
-#
-#
-
 PROGRAM_EXTENSIONS = {
     "python": "py",
     "javascript": "js",
@@ -67,7 +56,6 @@ class Executor():
         i = 0
         while i < len(lst):
             if lst[i] == "'":
-                # Found the opening quote
                 quoted_str = lst[i]
                 i += 1
                 while i < len(lst) and lst[i] != "'":
@@ -98,7 +86,6 @@ class Executor():
             else:
                 result.append(item)
         
-        #print(result)
         return result
 
     def execute(self, command_list):
@@ -180,27 +167,22 @@ class Executor():
                 pyautogui.press('enter')
 
                 return command_str
-            case 'excel':
-                # Excel Operations
-                #
-                # columns
-                # formula
-                # chart
-                #
-                
+            case 'excel':                
                 command_list = self.merge_between_parentheses(command_list)
-                wb = openpyxl.Workbook()
-                sheet = wb.active
-
                 operation = command_list[1]
 
                 match operation:
                     case "columns":
+                        wb = openpyxl.Workbook()
+                        sheet = wb.active
+                
                         column_names = command_list[2].split(',')
                         column_values = []
+
+                        data_list = command_list[3:]
                         
-                        for i in range(2, len(command_list)):
-                            column_values.append(command_list[i].split(','))
+                        for str_list in data_list:
+                            column_values.append(str_list.split(','))
                         
                         for i, name in enumerate(column_names):
                             sheet[f'{EXCEL_DICT[i]}1'] = name
@@ -213,6 +195,9 @@ class Executor():
                         wb.save(file_path)
                         startfile(file_path)
                     case "load":
+                        wb = openpyxl.Workbook()
+                        sheet = wb.active
+
                         desktop_path = path.join(path.join(environ['USERPROFILE']), 'Desktop')
                         data_file_path = f'{desktop_path}/{command_list[2]}.txt'
                         file = open(data_file_path, "r")
@@ -226,6 +211,40 @@ class Executor():
                         file_path = 'example.xlsx'
                         wb.save(file_path)
                         startfile(file_path)
+                    case "add":
+                        desktop_path = path.join(path.join(environ['USERPROFILE']), 'Desktop')
+                        data_file_path = f'{desktop_path}/{command_list[2]}.xlsx'
+
+                        wb = openpyxl.load_workbook(data_file_path)
+                        sheet = wb.active
+
+                        column_names = command_list[3].split(',')
+                        column_values = []
+
+                        data_list = command_list[4:]
+                        
+                        for str_list in data_list:
+                            column_values.append(str_list.split(','))
+
+                        def get_empty_column():
+                            for i in range(20):
+                                if sheet.cell(row=1, column=i+1).value is None:
+                                    return i
+                            return -1
+                        
+                        empty_col_idx = get_empty_column()
+                        
+                        for i, name in enumerate(column_names):
+                            sheet[f'{EXCEL_DICT[i+empty_col_idx]}1'] = name
+                        
+                        for i in range(len(column_names)):
+                            for j in range(len(column_values[0])):
+                                cell = sheet[f'{EXCEL_DICT[i + empty_col_idx]}{j + 2}']
+                                cell.value = column_values[i][j]
+                                cell.number_format = map_format(column_values[i][j])
+
+                        wb.save(data_file_path)
+                        startfile(data_file_path)
                     case _:
                         print("Nieprawidłowa komenda excela")
             
@@ -233,7 +252,6 @@ class Executor():
                 extension = PROGRAM_EXTENSIONS[command_list[1]]
                 program = f'''{" ".join(command_list[2:])[1:-1].replace("true", "True").replace("false", "False")}'''[0:]
 
-                # Path
                 desktop_path = path.join(path.join(environ['USERPROFILE']), 'OneDrive\Pulpit')
                 desktop_file_path = path.join(desktop_path, f'file.{extension}')
                 file_path = f'file.{extension}'
